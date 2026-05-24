@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .omc/
+
+# Claude Code 项目级本地设置
+.claude/settings.local.json
+.claude/*.local.md
