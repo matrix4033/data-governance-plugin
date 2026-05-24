@@ -2,12 +2,12 @@
   "mcpServers": {
     "dg-neo4j": {
       "command": "bash",
-      "args": ["scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
+      "args": ["-c", "cd \"${CLAUDE_PLUGIN_ROOT}\" && exec bash scripts/mcp_wrapper.sh mcp_neo4j.py"],
       "alwaysLoad": true
     },
     "dg-builder": {
       "command": "bash",
-      "args": ["scripts/mcp_wrapper.sh", "mcp_builder.py"],
+      "args": ["-c", "cd \"${CLAUDE_PLUGIN_ROOT}\" && exec bash scripts/mcp_wrapper.sh mcp_builder.py"],
       "alwaysLoad": true
     }
   }
