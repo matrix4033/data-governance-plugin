@@ -1,0 +1,41 @@
+{
+  "name": "data-governance",
+  "version": "2.0.0",
+  "description": "数据治理插件：元数据查询 + 六性质检规则生成 + SQL转换 + 检查执行 + 质量报告",
+  "author": {
+    "name": "matrix4033"
+  },
+  "userConfig": {
+    "neo4j_host": {
+      "type": "string",
+      "title": "Neo4j 主机地址",
+      "description": "Neo4j 数据库主机地址",
+      "default": "127.0.0.1"
+    },
+    "neo4j_port": {
+      "type": "string",
+      "title": "Neo4j 端口",
+      "description": "Neo4j 数据库端口",
+      "default": "7687"
+    },
+    "neo4j_user": {
+      "type": "string",
+      "title": "Neo4j 用户名",
+      "description": "Neo4j 用户名",
+      "default": "neo4j"
+    },
+    "neo4j_password": {
+      "type": "string",
+      "title": "Neo4j 密码",
+      "description": "Neo4j 密码",
+      "sensitive": true,
+      "default": ""
+    },
+    "neo4j_database": {
+      "type": "string",
+      "title": "Neo4j 数据库名",
+      "description": "Neo4j 数据库名",
+      "default": "neo4j"
+    }
+  }
+}
