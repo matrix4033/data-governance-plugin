@@ -342,20 +342,32 @@ def handle_request(request):
     if method == "notifications/initialized":
         return
 
-    if method == "mcp.list_tools":
+    if method == "tools/list":
         tools_list = []
         for name, tool in TOOLS.items():
+            input_schema = {"type": "object", "properties": {}}
+            for pname, pinfo in tool["params"].items():
+                prop = {"type": pinfo.get("type", "string")}
+                if "enum" in pinfo:
+                    prop["enum"] = pinfo["enum"]
+                if "default" in pinfo:
+                    prop["default"] = pinfo["default"]
+                if "description" in pinfo:
+                    prop["description"] = pinfo["description"]
+                input_schema["properties"][pname] = prop
+                if pinfo.get("required", False):
+                    input_schema.setdefault("required", []).append(pname)
             tools_list.append({
                 "name": name,
                 "description": tool["description"],
-                "params": tool["params"],
+                "inputSchema": input_schema,
             })
         send_response({"id": req_id, "result": {"tools": tools_list}})
         return
 
-    if method == "mcp.call_tool":
+    if method in ("tools/call", "mcp.call_tool"):
         tool_name = params.get("name", "")
-        tool_args = params.get("args", {})
+        tool_args = params.get("arguments", params.get("args", {}))
         tool = TOOLS.get(tool_name)
         if not tool:
             send_response({"id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}})
@@ -375,7 +387,7 @@ def handle_request(request):
             })
         return
 
-    if method == "mcp.get_tool":
+    if method in ("tools/get", "mcp.get_tool"):
         tool_name = params.get("name", "")
         tool = TOOLS.get(tool_name)
         if not tool:
@@ -386,7 +398,7 @@ def handle_request(request):
             "result": {
                 "name": tool_name,
                 "description": tool["description"],
-                "params": tool["params"],
+                "inputSchema": tool.get("inputSchema", {}),
             },
         })
         return
