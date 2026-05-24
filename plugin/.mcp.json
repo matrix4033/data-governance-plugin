@@ -2,7 +2,15 @@
   "mcpServers": {
     "dg-neo4j": {
       "command": "/opt/anaconda3/envs/work-env/bin/python",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp_neo4j.py"]
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp_neo4j.py"],
+      "env": {
+        "NEO4J_HOST": "${NEO4J_HOST:-127.0.0.1}",
+        "NEO4J_PORT": "${NEO4J_PORT:-7687}",
+        "NEO4J_USER": "${NEO4J_USER:-neo4j}",
+        "NEO4J_DATABASE": "${NEO4J_DATABASE:-neo4j}",
+        "NEO4J_PASSWORD": "${NEO4J_PASSWORD:-}"
+      },
+      "alwaysLoad": true
     },
     "dg-builder": {
       "command": "/opt/anaconda3/envs/work-env/bin/python",
@@ -10,7 +18,8 @@
       "env": {
         "BUILDER_CONFIG": "${CLAUDE_PLUGIN_ROOT}/scripts/config.json",
         "BUILDER_DIR": "${CLAUDE_PLUGIN_ROOT}/scripts/builder"
-      }
+      },
+      "alwaysLoad": true
     }
   }
 }
