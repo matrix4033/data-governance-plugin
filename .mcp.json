@@ -1,16 +1,22 @@
 {
   "mcpServers": {
     "dg-neo4j": {
+      "type": "stdio",
       "command": "bash",
-      "args": ["plugin/scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
-      "env": { "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python", "NEO4J_PASSWORD": "Fassiwell0." },
-      "alwaysLoad": true
+      "args": ["/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
+      "env": {
+        "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python",
+        "NEO4J_PASSWORD": "Fassiwell0."
+      }
     },
     "dg-builder": {
+      "type": "stdio",
       "command": "bash",
-      "args": ["plugin/scripts/mcp_wrapper.sh", "mcp_builder.py"],
-      "env": { "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python", "NEO4J_PASSWORD": "Fassiwell0." },
-      "alwaysLoad": true
+      "args": ["/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/mcp_wrapper.sh", "mcp_builder.py"],
+      "env": {
+        "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python",
+        "NEO4J_PASSWORD": "Fassiwell0."
+      }
     }
   }
 }
