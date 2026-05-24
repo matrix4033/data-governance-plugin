@@ -1,14 +1,16 @@
 {
   "mcpServers": {
     "dg-neo4j": {
-      "command": "/bin/bash",
-      "args": ["./dg-neo4j.sh"],
-      "env": {}
+      "command": "/opt/anaconda3/envs/work-env/bin/python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp_neo4j.py"]
     },
     "dg-builder": {
-      "command": "/bin/bash",
-      "args": ["./dg-builder.sh"],
-      "env": {}
+      "command": "/opt/anaconda3/envs/work-env/bin/python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp_builder.py"],
+      "env": {
+        "BUILDER_CONFIG": "${CLAUDE_PLUGIN_ROOT}/scripts/config.json",
+        "BUILDER_DIR": "${CLAUDE_PLUGIN_ROOT}/scripts/builder"
+      }
     }
   }
 }
