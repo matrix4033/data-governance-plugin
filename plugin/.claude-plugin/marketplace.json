@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "data-governance",
-      "source": "./plugin",
+      "source": ".",
       "description": "数据治理全流程：元数据查询 + 六性质检规则生成/SQL转换/执行/质量报告",
       "version": "2.0.0",
       "author": {
