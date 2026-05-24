@@ -7,6 +7,4 @@ __pycache__/
 .claude/settings.local.json
 .claude/*.local.md
 
-# 由 setup_mcp.sh 生成（含机器级绝对路径）
-# 已改用相对路径，可提交（如果需要跨机器）
-# .mcp.json
+# .mcp.json 由 git 跟踪（使用相对路径，支持跨机器）

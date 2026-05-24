@@ -1,6 +1,7 @@
 #!/bin/bash
-# MCP 初始化 —— 生成 .mcp.json（绝对路径 + Python 自动探测 + 依赖验证）
+# MCP 初始化指引 —— 检查 Python 环境
 # 克隆后执行一次: bash plugin/scripts/setup_mcp.sh
+# 注意：.mcp.json 由 git 统一管理，使用相对路径。此脚本仅验证环境。
 
 set -e
 
@@ -8,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$PLUGIN_ROOT/.." && pwd)"
 
-echo "=== MCP 初始化 ==="
+echo "=== MCP 环境检查 ==="
 echo ""
 
 # ---- 自动探测 Python ----
@@ -36,13 +37,19 @@ if [ -n "$PY" ]; then
     echo "📦 探测到 Python: $PY"
 
     if ! check_dep "$PY" "neo4j"; then
-        echo "   ⚠️  缺失 neo4j 包 — MCP dg-neo4j 将无法启动"
+        echo "   ⚠️  缺失 neo4j 包"
         DEP_OK=false
     else
         echo "   ✅ neo4j 包已安装"
     fi
 
-    # builder 的模块在本地，不需要额外 pip 包
+    if ! check_dep "$PY" "mcp"; then
+        echo "   ⚠️  缺失 mcp 包"
+        DEP_OK=false
+    else
+        echo "   ✅ mcp 包已安装"
+    fi
+
     echo "   ✅ builder 模块（本地）"
 else
     echo "⚠️  未找到 Python 解释器"
@@ -59,58 +66,18 @@ if [ "$DEP_OK" = false ]; then
     echo ""
     echo "    conda create -n work-env python=3.11 -y"
     echo "    conda activate work-env"
-    echo "    pip install neo4j"
+    echo "    pip install neo4j mcp"
     echo ""
     echo "  或者安装到当前 Python："
-    echo "    pip install neo4j"
+    echo "    pip install neo4j mcp"
     echo ""
     echo "  配置完成后重新运行："
     echo "    bash plugin/scripts/setup_mcp.sh"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 fi
 
-# ---- 生成 .mcp.json ----
 echo ""
-echo "生成 .mcp.json ..."
-
-if [ -n "$PY" ]; then
-    cat > "$REPO_ROOT/.mcp.json" <<EOF
-{
-  "mcpServers": {
-    "dg-neo4j": {
-      "command": "bash",
-      "args": ["$PLUGIN_ROOT/scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
-      "env": { "DG_PYTHON": "$PY" },
-      "alwaysLoad": true
-    },
-    "dg-builder": {
-      "command": "bash",
-      "args": ["$PLUGIN_ROOT/scripts/mcp_wrapper.sh", "mcp_builder.py"],
-      "env": { "DG_PYTHON": "$PY" },
-      "alwaysLoad": true
-    }
-  }
-}
-EOF
-else
-    cat > "$REPO_ROOT/.mcp.json" <<EOF
-{
-  "mcpServers": {
-    "dg-neo4j": {
-      "command": "bash",
-      "args": ["$PLUGIN_ROOT/scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
-      "alwaysLoad": true
-    },
-    "dg-builder": {
-      "command": "bash",
-      "args": ["$PLUGIN_ROOT/scripts/mcp_wrapper.sh", "mcp_builder.py"],
-      "alwaysLoad": true
-    }
-  }
-}
-EOF
-fi
-
-echo "✅ .mcp.json 已生成: $REPO_ROOT/.mcp.json"
+echo "✅ MCP 环境检查完成"
 echo ""
-echo "下一步：启动 Claude Code（从 repo 根目录），输入 /mcp 验证"
+echo "项目 .mcp.json 已由 git 管理（使用相对路径），无需手动生成"
+echo "启动 Claude Code（从 repo 根目录），输入 /mcp 验证"
