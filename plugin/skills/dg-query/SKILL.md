@@ -82,3 +82,8 @@ description: 当用户要求查表结构、搜索字段、检索字段、查看�
 - 搜索结果中的 `node_id` 可直接传给 `get_node_details` 使用
 - 字段搜索结果在可用时会包含 `table_name` 属性
 - 如果搜索无结果，可尝试使用 keyword 模式作为备选
+
+## 附加资源
+
+### 参考文件
+- **`references/query-examples.md`** — 更多 Cypher 查询示例和搜索模式对照表

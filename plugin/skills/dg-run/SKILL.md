@@ -92,3 +92,8 @@ Present the plan and ask for confirmation:
 - Results are saved to `output/results/<table>/` after execution
 - Only ① (total) and ② (errors) SQL are executed by default
 - ③ (detail) and ④ (insert error table) require explicit flags
+
+## 附加资源
+
+### 参考文件
+- **`references/execution-guide.md`** — db_config 模板、多数据源配置、执行参数说明

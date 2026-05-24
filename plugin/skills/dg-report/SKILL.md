@@ -88,3 +88,8 @@ Reports are saved to:
 - Report works in plan mode (no execution needed to generate)
 - Actual scores require execution results from dg-run
 - CSV reports can be imported into Excel for further analysis
+
+## 附加资源
+
+### 参考文件
+- **`references/scoring-method.md`** — 评分算法说明、分数段解读、CSV 字段定义

@@ -76,3 +76,11 @@ CSV 已保存至: output/rules/T_CUSTOMER/
 - Rules are deterministic (no LLM calls) — generated from field metadata
 - Users can edit CSV files (enable/disable rules, adjust thresholds) before convert
 - Each rule has: id, table_name, field_name, stage, dimension, rule_name, rule_desc, check_condition, threshold, enabled
+
+## 附加资源
+
+### 参考文件
+- **`references/rules-reference.md`** — 各维度规则详解、命名规范、阈值参考
+
+### Agent
+- **`rules-reviewer`** — 规则质量审查 agent，生成后调用"审查规则"触发

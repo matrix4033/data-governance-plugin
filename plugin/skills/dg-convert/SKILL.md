@@ -73,3 +73,8 @@ After conversion, suggest next actions:
 - Only rules with `enabled=true` are converted
 - Users can edit CSV files between generate and convert
 - The `--execute` flag is NOT passed here — this step only generates SQL files
+
+## 附加资源
+
+### 参考文件
+- **`references/sql-format.md`** — SQL 输出格式规范、方言支持、错误表结构

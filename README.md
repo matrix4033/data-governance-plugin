@@ -1,0 +1,256 @@
+# Data Governance Plugin
+
+数据治理全流程插件：元数据查询 + 六性质检规则生成 + SQL 转换 + 检查执行 + 质量报告。
+
+## 功能概览
+
+```mermaid
+graph LR
+    A[元数据查询] --> B[规则生成]
+    B --> C[规则转SQL]
+    C --> D[执行检查]
+    D --> E[质量报告]
+    style A fill:#4A90D9,color:#fff
+    style B fill:#50C878,color:#fff
+    style C fill:#F5A623,color:#fff
+    style D fill:#D0021B,color:#fff
+    style E fill:#7B68EE,color:#fff
+```
+
+| 步骤 | 技能 | 说明 |
+|------|------|------|
+| ① | `dg-query` | 查询 Neo4j 元数据（表结构/字段搜索/血缘追溯） |
+| ② | `dg-rules` | 基于字段元数据生成五维质检规则 |
+| ③ | `dg-convert` | 规则 CSV 转可执行 SQL |
+| ④ | `dg-run` | 执行检查（默认 dry-run） |
+| ⑤ | `dg-report` | 生成质量评分报告 |
+
+### 六性质检维度
+
+| 维度 | 阶段 | 说明 |
+|------|------|------|
+| **规范性 (Validity)** | 阶段一 | 字段值格式、枚举值、空字符串检查 |
+| **唯一性 (Uniqueness)** | 阶段一 | 主键/候选键唯一性检查 |
+| **完整性 (Completeness)** | 阶段二 | 核心/非核心字段空值率检查 |
+| **一致性 (Consistency)** | 阶段二 | 字段间逻辑关系、枚举值合法性检查 |
+| **准确性 (Accuracy)** | 阶段三 | 记录数量级、异常数据、测试数据检测 |
+
+## 前提条件
+
+- **Python 3.9+**，推荐使用 conda 环境
+- **可选：Neo4j 数据库**（用于元数据查询，非六性质检必需）
+
+### 依赖安装
+
+```bash
+# 质检 MCP 服务器（无额外依赖）
+# 所有 builder 模块使用 Python 标准库
+
+# Neo4j MCP 服务器（可选）
+pip install neo4j
+
+# 执行检查（可选）
+pip install pymysql
+```
+
+## 安装方式
+
+### 方式一：Git Marketplace 安装（推荐）
+
+在 `~/.claude/settings.json` 中添加：
+
+```json
+"extraKnownMarketplaces": {
+  "data-governance": {
+    "source": {
+      "source": "git",
+      "url": "https://github.com/matrix4033/data-governance-plugin.git"
+    }
+  }
+}
+```
+
+然后在 Claude Code 中执行：
+
+```
+/reload-plugins
+/plugin install data-governance
+```
+
+### 方式二：克隆到本地
+
+```bash
+git clone https://github.com/matrix4033/data-governance-plugin.git
+cd data-governance-plugin
+claude
+```
+
+根目录的 `.claude-plugin/plugin.json` 会自动发现插件。
+
+### 方式三：添加到其他项目
+
+在项目的 `.claude/settings.local.json` 中：
+
+```json
+{
+  "plugins": ["/path/to/data-governance-plugin/plugin"]
+}
+```
+
+## 环境变量
+
+| 变量 | 描述 | 默认值 |
+|------|------|--------|
+| `DG_PYTHON` | Python 解释器路径 | 自动探测 |
+| `NEO4J_HOST` | Neo4j 主机地址 | `127.0.0.1` |
+| `NEO4J_PORT` | Neo4j 端口 | `7687` |
+| `NEO4J_USER` | Neo4j 用户名 | `neo4j` |
+| `NEO4J_PASSWORD` | Neo4j 密码 | （空） |
+| `NEO4J_DATABASE` | Neo4j 数据库 | `neo4j` |
+
+推荐在 `~/.claude/settings.json` 的 `env` 段配置：
+
+```json
+{
+  "env": {
+    "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python",
+    "NEO4J_PASSWORD": "your-password"
+  }
+}
+```
+
+## 使用流程
+
+### 1. 查询元数据（可选）
+
+```
+查一下 T_CUSTOMER 表结构
+```
+
+若配置了 Neo4j，自动返回字段列表、业务术语和血缘关系。
+
+### 2. 生成质检规则
+
+```
+给 T_CUSTOMER 生成六性质检规则
+```
+
+自动根据字段元数据生成规则 CSV。可指定维度：
+
+```
+只生成规范性和唯一性检查
+```
+
+### 3. 审查规则（可选）
+
+```
+审查 T_CUSTOMER 的规则质量
+```
+
+通过内置 `rules-reviewer` agent 自动检查规则完整性和阈值合理性。
+
+### 4. 转换规则为 SQL
+
+```
+将 T_CUSTOMER 的规则转为 SQL
+```
+
+CSV → SQL，每条规则生成 4 段 SQL（全量/错误量/明细/插入错误表）。
+
+### 5. 执行检查
+
+```
+跑一下 T_CUSTOMER 的检查
+```
+
+默认 dry-run，确认后自动执行。需提供数据库连接配置：
+
+```json
+{
+  "default": {
+    "host": "127.0.0.1",
+    "port": 9030,
+    "user": "root",
+    "password": "",
+    "database": "base_zrr_decode"
+  }
+}
+```
+
+### 6. 生成质量报告
+
+```
+生成 T_CUSTOMER 的质量报告
+```
+
+支持计划模式（未执行）和执行模式（有结果）。
+
+## 项目结构
+
+```
+data-governance-plugin/
+├── .claude-plugin/
+│   ├── plugin.json              # 插件清单（本地自动发现）
+│   └── marketplace.json         # 市场发现配置
+├── plugin/
+│   ├── .claude-plugin/
+│   │   ├── plugin.json          # 插件清单（分发安装）
+│   │   └── marketplace.json     # 安装后市场元数据
+│   ├── .mcp.json                # MCP 服务器配置
+│   ├── agents/
+│   │   └── rules-reviewer.md    # 规则审查 agent
+│   ├── scripts/
+│   │   ├── mcp_neo4j.py         # Neo4j 元数据查询 MCP
+│   │   ├── mcp_builder.py       # 六性质检 MCP
+│   │   ├── mcp_wrapper.sh       # MCP 包装脚本
+│   │   ├── config.json          # Builder 配置
+│   │   └── builder/             # 规则引擎模块
+│   └── skills/
+│       ├── dg-query/            # 元数据查询技能
+│       ├── dg-rules/            # 规则生成技能
+│       ├── dg-convert/          # 规则转 SQL 技能
+│       ├── dg-run/              # 执行检查技能
+│       └── dg-report/           # 质量报告技能
+└── README.md
+```
+
+## MCP 服务器
+
+### dg-neo4j（5 工具）
+
+| 工具 | 说明 |
+|------|------|
+| `check_connection` | 测试 Neo4j 连通性 |
+| `get_graph_overview` | 图谱概览统计 |
+| `search_metadata` | 元数据搜索（keyword/attribute/exact） |
+| `get_node_details` | 节点详情及邻居 |
+| `get_lineage` | 血缘追溯（业务/技术） |
+
+无 Neo4j 时自动降级为中文友好提示，不影响其他功能。
+
+### dg-builder（4 工具）
+
+| 工具 | 说明 |
+|------|------|
+| `generate_rules` | 生成六性质检规则 |
+| `convert_rules` | CSV 规则转 SQL |
+| `run_checks` | 执行检查（默认 dry-run） |
+| `generate_report` | 生成质量报告 |
+
+## 输出目录
+
+所有输出文件默认保存在 `/tmp/data-governance-output/`：
+
+```
+/tmp/data-governance-output/
+├── rules/<table>/            # 规则 CSV
+├── sqls/<table>/             # 转换后的 SQL
+├── results/<table>/          # 执行结果
+└── reports/<table>/          # 质量报告
+```
+
+可通过 `plugin/scripts/config.json` 中 `output_dir` 修改。
+
+## 许可证
+
+MIT
