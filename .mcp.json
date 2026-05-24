@@ -2,20 +2,23 @@
   "mcpServers": {
     "dg-neo4j": {
       "type": "stdio",
-      "command": "bash",
-      "args": ["/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
+      "command": "/opt/anaconda3/envs/work-env/bin/python",
+      "args": ["/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/mcp_neo4j.py"],
       "env": {
-        "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python",
-        "NEO4J_PASSWORD": "Fassiwell0."
+        "NEO4J_HOST": "127.0.0.1",
+        "NEO4J_PORT": "7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "Fassiwell0.",
+        "NEO4J_DATABASE": "neo4j"
       }
     },
     "dg-builder": {
       "type": "stdio",
-      "command": "bash",
-      "args": ["/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/mcp_wrapper.sh", "mcp_builder.py"],
+      "command": "/opt/anaconda3/envs/work-env/bin/python",
+      "args": ["/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/mcp_builder.py"],
       "env": {
-        "DG_PYTHON": "/opt/anaconda3/envs/work-env/bin/python",
-        "NEO4J_PASSWORD": "Fassiwell0."
+        "BUILDER_CONFIG": "/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/config.json",
+        "BUILDER_DIR": "/Users/rapa/Desktop/code/data-governance-plugin/plugin/scripts/builder"
       }
     }
   }
