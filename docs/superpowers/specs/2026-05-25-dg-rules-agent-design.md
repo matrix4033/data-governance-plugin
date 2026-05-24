@@ -137,25 +137,38 @@ Agent 内部自动调用 `rules-reviewer` agent 对生成的规则进行质量�
 
 ---
 
-## 文件结构（渐进式披露）
+## 文件结构（渐进式披露，方案 B）
 
 ```
 plugin/
 ├── skills/
 │   └── dg-rules/
-│       ├── SKILL.md                      # Level 2: thin wrapper
+│       ├── SKILL.md                      # Level 2: thin wrapper（契约）
 │       └── references/
-│           ├── agent-guide.md             # Level 3: Agent 完整工作流程
-│           └── rules-reference.md        # Level 3: 六维规则参考
+│           └── rules-reference.md        # Level 3: 纯数据表，Agent 按需 Read
 └── agents/
-    └── dg-rules-agent.md                  # Agent 定义
+    └── dg-rules-agent.md                  # Agent 系统提示（完整工作流程）
 ```
+
+**渐进式披露原则：**
+
+| Level | 文件 | 内容 | 加载方式 |
+|-------|------|------|---------|
+| **L1** | frontmatter | name + description | 始终加载 (~100 tokens) |
+| **L2** | SKILL.md body | 契约：做什么 + 输入 + 输出 + 错误处理 | Skill 触发时加载 (< 5k tokens) |
+| **L3** | references/*.md | 纯数据表（阈值表、规则类型表） | Agent 主动 Read，不自动加载 |
+| **Agent** | agents/dg-rules-agent.md | 完整系统提示（9个 Step） | via `agent:` directive |
+
+**关键设计点：**
+- `references/` 下不放 markdown 说明文档，只放**数据表**（Agent 需要时主动 Read）
+- Agent 定义放在 `agents/dg-rules-agent.md`，SKILL.md 通过 `agent:` 引用
+- `context: fork` 时，Agent 的指令来自 agent 定义文件，不是 SKILL.md body
 
 | 操作 | 文件路径 |
 |------|---------|
 | **新增** | `plugin/agents/dg-rules-agent.md` |
 | **修改** | `plugin/skills/dg-rules/SKILL.md` |
-| **新增** | `plugin/skills/dg-rules/references/agent-guide.md` |
+| **修改** | `plugin/skills/dg-rules/references/rules-reference.md` — 扩展为纯数据表 |
 | **修改** | `plugin/scripts/mcp_neo4j.py` — 新增 `get_table_metadata` 工具 |
 
 ---
@@ -169,20 +182,6 @@ plugin/
 Agent 完整工作流程（9个 Step）、规则质量标准、输出格式、错误处理 → 见上方 "Agent 工作流程" 部分。
 
 ### 2. dg-rules SKILL.md（新版本）
-
-遵循**渐进式披露原则**：
-
-```
-Level 1 (frontmatter)  ← 始终加载 (~100 tokens)
-  name, description (精简), context: fork, agent
-
-Level 2 (SKILL.md body)  ← skill 触发时加载 (~500 tokens)
-  做什么 + 输入 + 输出 + 错误处理
-
-Level 3 (references/)  ← 按需加载
-  ├── agent-guide.md      ← Agent 完整工作流程和实现细节
-  └── rules-reference.md ← 六维规则详解
-```
 
 **文件**: `plugin/skills/dg-rules/SKILL.md`
 
@@ -220,19 +219,40 @@ agent: dg-rules-agent
 - Neo4j 不可用: 降级提示
 - 生成失败: 返回具体错误信息
 
-## 参考资源（按需加载）
+## 参考资源（按需 Read）
 
-- `references/agent-guide.md` — Agent 工作流程和实现细节
-- `references/rules-reference.md` — 六维规则详解
+- `references/rules-reference.md` — 六维规则数据表（阈值、规则类型）
 ```
 
-### 3. references/agent-guide.md（Level 3 新增）
+### 3. references/rules-reference.md（Level 3 数据表）
 
-**文件**: `plugin/skills/dg-rules/references/agent-guide.md`
+**文件**: `plugin/skills/dg-rules/references/rules-reference.md`
 
-Agent 的完整工作流程、技术实现细节、标准查询方法。
+纯数据表格式，Agent 在推理过程中按需 Read：
 
-详细内容见设计文档上方 "Agent 工作流程" 部分。
+```markdown
+# 六维规则参考数据表
+
+## 阈值标准
+
+| 字段类型 | 维度 | 阈值 |
+|---------|------|------|
+| 核心字段 | completeness | ≤ 0.05 |
+| 非核心字段 | completeness | ≤ 0.30 |
+| 主键 | uniqueness | 0.0 |
+| 编码字段 | validity | 0.0 |
+| 测试数据 | accuracy | 0.0 |
+
+## 规则类型映射
+
+| 字段后缀/特征 | 推荐规则类型 |
+|--------------|------------|
+| `_ID`, `_CODE` 结尾 | 非空检查、格式检查 |
+| `ID_NO`, 身份证 | 18位正则、校验位 |
+| `GENDER`, 性别 | 枚举值 (GB/T 2261.1) |
+| `DATE`, `TIME` | 日期格式、时序关系 |
+| ... | ... |
+```
 
 ### 4. get_table_metadata 工具
 
