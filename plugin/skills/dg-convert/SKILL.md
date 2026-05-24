@@ -2,8 +2,6 @@
 name: dg-convert
 version: 1.0.0
 description: 当用户要求将规则转为 SQL、转换规则、convert rules、生成 SQL 脚本时使用。触发词：转SQL、转换规则、convert rules、生成SQL。调用 dg-builder MCP 的 convert_rules 工具。
-context: fork
-model: inherit
 ---
 
 # Data Governance: CSV to SQL Conversion

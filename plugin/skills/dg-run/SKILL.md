@@ -2,8 +2,6 @@
 name: dg-run
 version: 1.0.0
 description: 当用户要求执行检查、运行质检 SQL、跑检查、dry-run 时使用。触发词：执行检查、run checks、跑检查、执行SQL、dry-run、运行质检。默认 dry-run 模式，需用户确认后才实际执行。调用 dg-builder MCP 的 run_checks 工具。
-context: fork
-model: inherit
 ---
 
 # Data Governance: Execute Checks

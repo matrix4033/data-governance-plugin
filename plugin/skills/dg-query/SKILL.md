@@ -2,8 +2,6 @@
 name: dg-query
 version: 1.0.0
 description: 当用户要求查表结构、搜索字段、检索字段、查看血缘、元数据搜索时使用。触发词：查表、搜索字段、检索、字段详情、表结构、describe table、search metadata、trace lineage、字段信息、数据来源。通过 dg-neo4j MCP 服务器提供元数据搜索能力。
-context: fork
-model: inherit
 ---
 
 # 数据治理：元数据查询

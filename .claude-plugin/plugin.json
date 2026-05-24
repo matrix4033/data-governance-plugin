@@ -8,32 +8,32 @@
   },
   "skills": ["./plugin/skills/dg-query", "./plugin/skills/dg-rules", "./plugin/skills/dg-convert", "./plugin/skills/dg-run", "./plugin/skills/dg-report"],
   "userConfig": {
-    "neo4j_host": {
+    "NEO4J_HOST": {
       "type": "string",
       "title": "Neo4j 主机地址",
       "description": "Neo4j 数据库主机地址",
       "default": "127.0.0.1"
     },
-    "neo4j_port": {
+    "NEO4J_PORT": {
       "type": "string",
       "title": "Neo4j 端口",
       "description": "Neo4j 数据库端口",
       "default": "7687"
     },
-    "neo4j_user": {
+    "NEO4J_USER": {
       "type": "string",
       "title": "Neo4j 用户名",
       "description": "Neo4j 用户名",
       "default": "neo4j"
     },
-    "neo4j_password": {
+    "NEO4J_PASSWORD": {
       "type": "string",
       "title": "Neo4j 密码",
       "description": "Neo4j 密码",
       "sensitive": true,
       "default": ""
     },
-    "neo4j_database": {
+    "NEO4J_DATABASE": {
       "type": "string",
       "title": "Neo4j 数据库名",
       "description": "Neo4j 数据库名",
