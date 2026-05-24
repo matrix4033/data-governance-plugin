@@ -40,6 +40,19 @@ graph LR
 - **Python 3.9+**，推荐使用 conda 环境
 - **可选：Neo4j 数据库**（用于元数据查询，非六性质检必需）
 
+### 快速创建 conda 环境
+
+如果其他机器没有 `work-env` 环境，执行：
+
+```bash
+# 创建并激活环境
+conda create -n work-env python=3.11 -y
+conda activate work-env
+
+# 安装依赖
+pip install neo4j mcp pymysql
+```
+
 ### 依赖安装
 
 ```bash
@@ -140,6 +153,51 @@ pip install neo4j mcp
 
 **注意**：`NEO4J_PASSWORD` 会通过环境变量传递给 MCP 服务器，无需在 `.mcp.json` 中配置。
 
+## 快速验证
+
+安装完成后，运行以下命令验证：
+
+```bash
+# 1. 检查 MCP 服务器连接
+claude mcp list
+
+# 2. 验证 dg-builder（无需 Neo4j）
+claude mcp get dg-builder
+
+# 3. 验证 dg-neo4j（需要 Neo4j 运行）
+claude mcp get dg-neo4j
+
+# 4. 环境检查
+bash plugin/scripts/setup_mcp.sh
+```
+
+## 技能与 Agent
+
+### Skills（技能）
+
+| 技能 | 触发词示例 | 说明 |
+|------|-------------|------|
+| `dg-query` | "检索字段"、"查表结构"、"字段详情" | 查询 Neo4j 元数据 |
+| `dg-rules` | "生成规则"、"质检规则"、"跑六性" | 生成六性质检规则 |
+| `dg-convert` | "转SQL"、"转换规则" | 规则 CSV 转 SQL |
+| `dg-run` | "执行检查"、"跑检查"、"dry-run" | 执行质检 SQL |
+| `dg-report` | "生成报告"、"质量报告"、"质检报告" | 生成质量评分 |
+
+### Agent
+
+| Agent | 触发词 | 说明 |
+|-------|---------|------|
+| `rules-reviewer` | "审查规则"、"review rules" | 检查规则质量和完整性 |
+
+使用示例：
+```
+# 使用 skill
+/plugin dg-rules 生成 T_USER 表的规则
+
+# 使用 agent
+/plugin rules-reviewer 审查 T_USER 的规则
+```
+
 ## 使用流程
 
 ### 1. 查询元数据（可选）
@@ -197,6 +255,8 @@ CSV → SQL，每条规则生成 4 段 SQL（全量/错误量/明细/插入错�
   }
 }
 ```
+
+将此配置保存为 `config/db_config.json`，执行检查时指定路径。
 
 ### 6. 生成质量报告
 
