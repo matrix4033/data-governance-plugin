@@ -1,10 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "data-governance",
   "version": "2.0.0",
   "description": "数据治理插件：元数据查询 + 六性质检规则生成 + SQL转换 + 检查执行 + 质量报告",
   "author": {
     "name": "matrix4033"
   },
+  "skills": ["./plugin/skills/"],
   "userConfig": {
     "neo4j_host": {
       "type": "string",
