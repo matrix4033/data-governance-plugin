@@ -14,6 +14,27 @@ SETTINGS_FILE="$SETTINGS_DIR/settings.local.json"
 
 mkdir -p "$SETTINGS_DIR"
 
+# 自动探测 conda work-env 的 Python（写入 DG_PYTHON env）
+DG_PYTHON=""
+for base in /opt/anaconda3 /opt/miniconda3 "$HOME/anaconda3" "$HOME/miniconda3"; do
+    [ -x "$base/envs/work-env/bin/python" ] && DG_PYTHON="$base/envs/work-env/bin/python" && break
+done
+if [ -z "$DG_PYTHON" ] && command -v conda &>/dev/null; then
+    DG_PYTHON="$(conda run -n work-env python -c "import sys; print(sys.executable)" 2>/dev/null || true)"
+    [ -n "$DG_PYTHON" ] && [ ! -x "$DG_PYTHON" ] && DG_PYTHON=""
+fi
+
+# 构建 env 段（仅在找到 conda python 时添加）
+ENV_BLOCK=""
+if [ -n "$DG_PYTHON" ]; then
+    ENV_BLOCK=$(cat <<ENVJSON
+  "env": {
+    "DG_PYTHON": "$DG_PYTHON"
+  },
+ENVJSON
+)
+fi
+
 # 构建 MCP 配置（使用绝对路径）
 MCP_CONFIG=$(cat <<JSON
 {
@@ -21,11 +42,13 @@ MCP_CONFIG=$(cat <<JSON
     "dg-neo4j": {
       "command": "bash",
       "args": ["$PLUGIN_ROOT/scripts/mcp_wrapper.sh", "mcp_neo4j.py"],
+      $ENV_BLOCK
       "alwaysLoad": true
     },
     "dg-builder": {
       "command": "bash",
       "args": ["$PLUGIN_ROOT/scripts/mcp_wrapper.sh", "mcp_builder.py"],
+      $ENV_BLOCK
       "alwaysLoad": true
     }
   }

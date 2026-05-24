@@ -15,14 +15,26 @@ shift
 # 切换到插件根目录
 cd "$PLUGIN_ROOT" || exit 1
 
-# Python 解释器（可覆盖）
+# Python 解释器（优先级：DG_PYTHON > conda work-env > python3 > python）
 if [ -n "$DG_PYTHON" ]; then
     PYTHON="$DG_PYTHON"
-elif command -v python3 &>/dev/null; then
-    PYTHON="python3"
-elif command -v python &>/dev/null; then
-    PYTHON="python"
 else
+    # 自动探测 conda work-env
+    for base in /opt/anaconda3 /opt/miniconda3 "$HOME/anaconda3" "$HOME/miniconda3"; do
+        [ -x "$base/envs/work-env/bin/python" ] && PYTHON="$base/envs/work-env/bin/python" && break
+    done
+    # conda run 备选
+    if [ -z "$PYTHON" ] && command -v conda &>/dev/null; then
+        PYTHON="$(conda run -n work-env python -c "import sys; print(sys.executable)" 2>/dev/null || true)"
+        [ -n "$PYTHON" ] && [ ! -x "$PYTHON" ] && PYTHON=""
+    fi
+    # 系统默认
+    if [ -z "$PYTHON" ]; then
+        PYTHON="$(command -v python3 || command -v python || true)"
+    fi
+fi
+
+if [ -z "$PYTHON" ]; then
     echo "ERROR: 未找到 Python 解释器。请设置 DG_PYTHON 环境变量" >&2
     exit 1
 fi
