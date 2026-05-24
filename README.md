@@ -43,13 +43,10 @@ graph LR
 ### 依赖安装
 
 ```bash
-# 质检 MCP 服务器（无额外依赖）
-# 所有 builder 模块使用 Python 标准库
+# 核心依赖
+pip install neo4j mcp
 
-# Neo4j MCP 服务器（可选）
-pip install neo4j
-
-# 执行检查（可选）
+# 执行检查（可选，需要连接数据库时）
 pip install pymysql
 ```
 
@@ -97,6 +94,28 @@ claude
 }
 ```
 
+### 旧版插件迁移
+
+如果您已安装旧版插件，请执行以下步骤更新：
+
+```bash
+cd /path/to/data-governance-plugin
+
+# 1. 拉取最新代码
+git pull origin main
+
+# 2. 删除旧版生成的 .mcp.json（如果存在且不在 git 中）
+#    新版 .mcp.json 由 git 统一管理
+git checkout .mcp.json  # 确保使用 git 版本的 .mcp.json
+
+# 3. 重新安装依赖
+pip install neo4j mcp
+
+# 4. 重启 Claude Code
+```
+
+如果 `.mcp.json` 存在合并冲突，请删除本地文件后 `git checkout .mcp.json`。
+
 ## 环境变量
 
 | 变量 | 描述 | 默认值 |
@@ -108,7 +127,7 @@ claude
 | `NEO4J_PASSWORD` | Neo4j 密码 | （空） |
 | `NEO4J_DATABASE` | Neo4j 数据库 | `neo4j` |
 
-推荐在 `~/.claude/settings.json` 的 `env` 段配置：
+推荐在 `~/.claude/settings.json` 的 `env` 段配置（`.mcp.json` 已加入 git 跟踪，请勿在其中明文写入密码）：
 
 ```json
 {
@@ -118,6 +137,8 @@ claude
   }
 }
 ```
+
+**注意**：`NEO4J_PASSWORD` 会通过环境变量传递给 MCP 服务器，无需在 `.mcp.json` 中配置。
 
 ## 使用流程
 
@@ -189,6 +210,7 @@ CSV → SQL，每条规则生成 4 段 SQL（全量/错误量/明细/插入错�
 
 ```
 data-governance-plugin/
+├── .mcp.json                    # MCP 服务器配置（git 跟踪）
 ├── .claude-plugin/
 │   ├── plugin.json              # 插件清单（本地自动发现）
 │   └── marketplace.json         # 市场发现配置
@@ -196,15 +218,15 @@ data-governance-plugin/
 │   ├── .claude-plugin/
 │   │   ├── plugin.json          # 插件清单（分发安装）
 │   │   └── marketplace.json     # 安装后市场元数据
-│   ├── .mcp.json                # MCP 服务器配置
 │   ├── agents/
 │   │   └── rules-reviewer.md    # 规则审查 agent
 │   ├── scripts/
 │   │   ├── mcp_neo4j.py         # Neo4j 元数据查询 MCP
-│   │   ├── mcp_builder.py       # 六性质检 MCP
-│   │   ├── mcp_wrapper.sh       # MCP 包装脚本
-│   │   ├── config.json          # Builder 配置
-│   │   └── builder/             # 规则引擎模块
+│   │   ├── mcp_builder.py        # 六性质检 MCP
+│   │   ├── mcp_wrapper.sh        # MCP 包装脚本
+│   │   ├── setup_mcp.sh          # 环境检查脚本
+│   │   ├── config.json           # Builder 配置
+│   │   └── builder/              # 规则引擎模块
 │   └── skills/
 │       ├── dg-query/            # 元数据查询技能
 │       ├── dg-rules/            # 规则生成技能
