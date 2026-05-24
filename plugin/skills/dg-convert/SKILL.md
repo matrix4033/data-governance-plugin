@@ -1,6 +1,7 @@
 ---
 name: dg-convert
-description: This skill should be used when the user asks to "转换规则为 SQL", "转 SQL", "convert rules", "生成 SQL", or wants to convert rule CSV files into executable SQL scripts. Reads CSV from output/rules/ and writes SQL to output/sqls/.
+version: 1.0.0
+description: 当用户要求将规则转为 SQL、转换规则、convert rules、生成 SQL 脚本时使用。触发词：转SQL、转换规则、convert rules、生成SQL。调用 dg-builder MCP 的 convert_rules 工具。
 context: fork
 model: inherit
 ---

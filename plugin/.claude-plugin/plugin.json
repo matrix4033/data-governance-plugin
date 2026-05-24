@@ -6,7 +6,7 @@
   "author": {
     "name": "matrix4033"
   },
-  "skills": ["./skills/"],
+  "skills": ["./skills/dg-query", "./skills/dg-rules", "./skills/dg-convert", "./skills/dg-run", "./skills/dg-report"],
   "userConfig": {
     "NEO4J_HOST": {
       "type": "string",

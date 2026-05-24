@@ -1,6 +1,7 @@
 ---
 name: dg-rules
-description: This skill should be used when the user asks to "生成规则", "质检规则", "run quality rules", "规范性检查", "唯一性检查", "跑一遍六性", or wants to generate data quality check rules for a specific table. Generates deterministic SQL rules using the dg-builder MCP server.
+version: 1.0.0
+description: 当用户要求生成质检规则、六性质检规则、规范性检查、唯一性检查时使用。触发词：生成规则、质检规则、run quality rules、规范性检查、唯一性检查、完整性检查、一致性检查、准确性检查、跑一遍六性。调用 dg-builder MCP 的 generate_rules 工具。
 context: fork
 model: inherit
 ---

@@ -1,6 +1,7 @@
 ---
 name: dg-report
-description: This skill should be used when the user asks to "生成报告", "质量报告", "generate report", "评分", "看结果", or wants to view data quality assessment results. Generates a formatted quality report with per-dimension scores and detailed rule status.
+version: 1.0.0
+description: 当用户要求生成质量报告、查看质检结果、评分汇总时使用。触发词：生成报告、质量报告、generate report、评分、看结果、评分汇总、质检报告。调用 dg-builder MCP 的 generate_report 工具。
 context: fork
 model: inherit
 ---
