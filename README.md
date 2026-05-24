@@ -65,39 +65,29 @@ pip install pymysql
 
 ## 安装方式
 
-### 方式一：Git Marketplace 安装（推荐）
+### 方式一：Claude Code 插件市场安装（推荐）
 
-在 `~/.claude/settings.json` 中添加：
-
-```json
-"extraKnownMarketplaces": {
-  "data-governance": {
-    "source": {
-      "source": "git",
-      "url": "https://github.com/matrix4033/data-governance-plugin.git"
-    }
-  }
-}
-```
-
-然后在 Claude Code 中执行：
+在 Claude Code 中执行：
 
 ```
-/reload-plugins
 /plugin install data-governance
 ```
 
-### 方式二：克隆到本地
+### 方式二：本地开发模式（贡献者）
+
+如果需要修改或调试插件代码：
 
 ```bash
+# 1. 克隆项目到本地
 git clone https://github.com/matrix4033/data-governance-plugin.git
 cd data-governance-plugin
+
+# 2. 在 Claude Code 中加载本地插件
+#    从项目根目录启动即可自动发现插件
 claude
 ```
 
-根目录的 `.claude-plugin/plugin.json` 会自动发现插件。
-
-### 方式三：添加到其他项目
+### 方式三：添加到其他 Claude 项目
 
 在项目的 `.claude/settings.local.json` 中：
 
@@ -109,25 +99,19 @@ claude
 
 ### 旧版插件迁移
 
-如果您已安装旧版插件，请执行以下步骤更新：
+如果您已通过 Claude Code 安装过旧版插件，更新步骤如下：
 
 ```bash
-cd /path/to/data-governance-plugin
+# 1. 重新安装插件（Claude Code 会拉取最新版本）
+/plugin install data-governance
 
-# 1. 拉取最新代码
-git pull origin main
+# 2. 重新安装依赖
+pip install neo4j mcp pymysql
 
-# 2. 删除旧版生成的 .mcp.json（如果存在且不在 git 中）
-#    新版 .mcp.json 由 git 统一管理
-git checkout .mcp.json  # 确保使用 git 版本的 .mcp.json
-
-# 3. 重新安装依赖
-pip install neo4j mcp
-
-# 4. 重启 Claude Code
+# 3. 重启 Claude Code
 ```
 
-如果 `.mcp.json` 存在合并冲突，请删除本地文件后 `git checkout .mcp.json`。
+**注意**：如果之前配置过 `~/.claude/settings.json` 中的插件路径指向本地目录，请移除或更新为新的 git 地址。
 
 ## 环境变量
 
