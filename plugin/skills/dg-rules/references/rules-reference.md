@@ -1,90 +1,56 @@
-# 六性质检规则参考
+# 六维规则参考数据表
 
-## 维度详解
+## 阈值标准
 
-### 规范性 (Validity)
+| 字段类型 | 维度 | 阈值 | 说明 |
+|---------|------|------|------|
+| 核心字段 | completeness | ≤ 0.05 | 5% 空值率上限 |
+| 非核心字段 | completeness | ≤ 0.30 | 30% 空值率上限 |
+| 主键 | uniqueness | 0.0 | 不允许重复 |
+| 编码字段 | validity | 0.0 | 不允许为空 |
+| 测试数据 | accuracy | 0.0 | 不允许存在 |
+| 记录数 | accuracy | > 0 | 表不能为空 |
 
-检查字段值是否符合格式要求。
+## 规则类型映射
 
-| 规则类型 | 说明 | 示例字段 | 阈值 |
-|---------|------|---------|------|
-| 枚举值检查 | 值必须在允许列表中 | GENDER → [0,1,2,9] | 0.1 |
-| 非空字符串 | 文本字段不能为空字符串或纯空格 | NAME | 0.1 |
-| 格式校验 | 身份证号、日期等格式 | ID_NO (18位) | 0.05 |
+| 字段后缀/特征 | 推荐规则 | 阈值 | 说明 |
+|--------------|---------|------|------|
+| 主键字段 | PK_UNIQUE | 0.0 | 主键唯一性 |
+| `_ID`, `_CODE` 结尾 | CODE_ | 0.0 | 非空检查 |
+| `ID_NO`, 身份证 | FORMAT_ID_NO | 0.05 | 18位正则 |
+| `ID_NO`, 身份证 | UNIQUE_ID_NO | 0.0 | 唯一性 |
+| `GENDER`, 性别 | ENUM_GENDER | 0.0 | GB/T 2261.1 |
+| `BIRTH_DATE` | FORMAT_DATE | 0.05 | 日期格式 |
+| `PHONE`, 手机 | FORMAT_PHONE | 0.05 | 11位数字 |
+| `EMAIL` | FORMAT_EMAIL | 0.05 | 邮箱格式 |
+| `CREATE_TIME`, `UPDATE_TIME` | DATE_ORDER | 0.0 | 时序关系 |
+| `START_DATE`, `END_DATE` | DATE_ORDER | 0.0 | 起止日期 |
+| 文本字段 | TEXT_ | 0.1 | 非空字符串 |
+| `_ID`, `_CODE` 结尾 | ID_CODE_VALID | 0.05 | ID/CODE 非空非零 |
+| GENDER + ID_NO 共存 | BIZ_LOGIC | 0.0 | 身份证第17位奇偶性 |
 
-**典型SQL**：`WHERE field = '' OR field IS NULL`
+## GB/T 标准参考
 
-### 唯一性 (Uniqueness)
+| 标准号 | 名称 | 关联字段 |
+|--------|------|---------|
+| GB 11643 | 公民身份号码 | ID_NO |
+| GB/T 2261.1 | 性别代码 | GENDER |
+| GB/T 3304 | 民族代码 | ETHNICITY |
+| WS/T 364.3 | 证件类型代码 | ID_TYPE |
+| GB/T 2261.2 | 婚姻状况代码 | MARITAL_STATUS |
 
-检查主键或候选键是否唯一。
+## 一致性规则模板
 
-| 规则类型 | 说明 | 阈值 |
-|---------|------|------|
-| 主键唯一 | 主键字段无重复值 | 0.0 |
-| 联合唯一 | 组合键无重复 | 0.0 |
+| 规则类型 | 条件模板 | 说明 |
+|---------|---------|------|
+| 日期时序 | earlier_field IS NOT NULL AND later_field IS NOT NULL AND earlier_field > later_field | 前日期晚于后日期 |
+| 字段依赖 | cond_field IS NOT NULL AND cond_field != '' AND dep_field IS NULL OR dep_field = '' | 条件字段有值时依赖字段不为空 |
+| 身份证奇偶 | LENGTH(ID_NO)=18 AND (GENDER='1' AND SUBSTRING(ID_NO,17,1)%2=1 OR GENDER='2' AND SUBSTRING(ID_NO,17,1)%2=0) | 性别与第17位奇偶一致 |
 
-**典型SQL**：`WHERE field IN (SELECT field FROM table GROUP BY field HAVING COUNT(1) > 1)`
+## 准确性规则模板
 
-### 完整性 (Completeness)
-
-检查字段空值率是否在可接受范围内。
-
-| 规则类型 | 说明 | 阈值 |
-|---------|------|------|
-| 核心字段 | PERSION_ID/ID_NO/NAME 等 | ≤ 0.05 (5%) |
-| 非核心字段 | 其他字段 | ≤ 0.3 (30%) |
-| 记录数检查 | 表不应为空 | 0.0 |
-
-**典型SQL**：`WHERE field IS NULL`
-
-### 一致性 (Consistency)
-
-检查字段间逻辑关系和字段值是否符合国家标准。
-
-| 规则类型 | 说明 | 示例 |
-|---------|------|------|
-| 枚举值标准 | 对照国标检查字段值 | GENDER → GB/T 2261.1 |
-| 跨字段逻辑 | 两个字段值逻辑一致 | 身份证号中的出生日期 = BIRTH_DATE |
-| 业务规则 | 业务约束条件 | 日期不能晚于当前日期 |
-
-**参考标准**：
-- GB/T 2261.1 — 性别代码
-- GB/T 3304 — 民族代码
-- WS/T 364.3 — 证件类型代码
-- GB/T 2261.2 — 婚姻状况代码
-
-### 准确性 (Accuracy)
-
-检查数据质量是否在合理范围内。
-
-| 规则类型 | 说明 | 阈值 |
-|---------|------|------|
-| 记录数量级 | 表记录数应在合理范围 | 0.0 |
-| 测试数据检测 | 检出测试/示例数据 | 0.0 |
-| 数据分布 | 字段值分布是否异常 | 0.1 |
-
-**测试关键词检测**：`测试`、`TEST`、`test`、`示例`、`SAMPLE`、`demo`、`DEMO`、`0000`、`1111`、`XXXX`
-
-## 规则 CSV 格式
-
-```csv
-id,table_name,field_name,stage,dimension,rule_name,rule_desc,check_condition,threshold,enabled
-,T_CUSTOMER,PERSION_ID,1,validity,TEXT_PERSION_ID,文本字段 自然人唯一标识 不能为空字符串或NULL,`PERSION_ID` = '' OR `PERSION_ID` IS NULL,0.1,true
-,T_CUSTOMER,PERSION_ID,1,uniqueness,PK_UNIQUE_PERSION_ID,主键 自然人唯一标识 必须唯一,`PERSION_ID` IN (SELECT `PERSION_ID` FROM base_zrr_decode.T_CUSTOMER GROUP BY `PERSION_ID` HAVING COUNT(1) > 1),0.0,true
-```
-
-## 命名规范
-
-规则名称采用 `{DIMENSION}_{FIELD}` 格式：
-
-| 前缀 | 维度 |
-|------|------|
-| `TEXT_` | 规范性 (文本字段) |
-| `ENUM_` | 规范性 (枚举字段) |
-| `PK_UNIQUE_` | 唯一性 (主键) |
-| `CORE_NULL_` | 完整性 (核心字段空值) |
-| `NONCORE_NULL_` | 完整性 (非核心字段空值) |
-| `RECORD_COUNT` | 完整性 (记录数) |
-| `ENUM_` | 一致性 (枚举值) |
-| `RANGE_` | 准确性 (数量级) |
-| `TEST_DATA_` | 准确性 (测试数据) |
+| 规则类型 | 检测条件 | 说明 |
+|---------|---------|------|
+| 测试数据 | LIKE '%测试%' OR LIKE '%TEST%' OR LIKE '%示例%' OR LIKE '%demo%' OR LIKE '%0000%' | 含测试关键词 |
+| ID/CODE 非空 | IS NOT NULL AND != '' AND != '0' | ID/CODE 字段有效性 |
+| 记录数量级 | COUNT(1) BETWEEN min AND max | 数量在合理范围 |
