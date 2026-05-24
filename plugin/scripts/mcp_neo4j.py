@@ -53,6 +53,111 @@ def check_connection() -> str:
 
 
 @mcp.tool()
+def get_table_metadata(table_name: str, schema: str = "") -> str:
+    """获取表的完整元数据（字段 + 业务语义 + 关联关系）。
+
+    查询该物理表对应的所有 Field 节点，返回每个字段的：
+    - 基本信息：name, type, nullable
+    - 业务语义：business_term, data_element, data_standard
+    - 图谱关系：is_core_field（通过 DataElement REPRESENTS 推断）, neighbors
+
+    Args:
+        table_name: 物理表名
+        schema: 数据库 schema（可选）
+
+    Returns:
+        JSON: {
+          "status": "ok",
+          "data": {
+            "table_name": "T_CUSTOMER",
+            "schema": "base_zrr_decode",
+            "fields": [
+              {
+                "name": "PERSION_ID",
+                "type": "varchar",
+                "business_term": "自然人唯一标识",
+                "data_standard": null,
+                "is_core_field": true,
+                "ref_table": null,
+                "data_element": "DE001",
+                "neighbors": [{"name": "T_ORDER", "relationship": "HAS_REFERENCE", "node_id": 123}]
+              }
+            ]
+          }
+        }
+    """
+    import json as _json
+
+    check_neo4j_connection()
+    driver = get_driver()
+    try:
+        with driver.session(database=NEO4J_DATABASE) as session:
+            # 查询物理表及其字段
+            cypher = """
+            MATCH (pt:PhysicalTable {name: $table_name})
+            OPTIONAL MATCH (pt)-[:HAS_FIELD]->(f:Field)
+            OPTIONAL MATCH (f)-[:REPRESENTS]->(de:DataElement)
+            OPTIONAL MATCH (f)-[r]->(m)
+            WHERE labels(m)[0] IN ['PhysicalTable', 'Field']
+            RETURN
+                pt.name AS table_name,
+                pt.schema AS schema,
+                f.name AS field_name,
+                f.type AS field_type,
+                f.nullable AS field_nullable,
+                f.business_term AS business_term,
+                de.name AS data_element,
+                de.data_standard AS data_standard,
+                ID(f) AS field_node_id,
+                m.name AS neighbor_name,
+                labels(m)[0] AS neighbor_type,
+                type(r) AS relationship
+            ORDER BY f.name
+            """
+            result = session.run(cypher, table_name=table_name, schema=schema or "")
+            records = list(result)
+
+            if not records or records[0].get("field_name") is None:
+                return _json.dumps({
+                    "status": "error",
+                    "message": f"表 {table_name} 不存在或没有字段"
+                }, ensure_ascii=False)
+
+            # 按字段分组
+            field_map = {}
+            for r in records:
+                fname = r["field_name"]
+                if fname not in field_map:
+                    field_map[fname] = {
+                        "name": fname,
+                        "type": r["field_type"] or "varchar",
+                        "business_term": r.get("business_term") or "",
+                        "data_standard": r.get("data_standard"),
+                        "is_core_field": r.get("data_element") is not None,
+                        "ref_table": None,
+                        "data_element": r.get("data_element"),
+                        "neighbors": []
+                    }
+                if r["neighbor_name"]:
+                    field_map[fname]["neighbors"].append({
+                        "name": r["neighbor_name"],
+                        "relationship": r["relationship"],
+                        "node_id": r.get("field_node_id")
+                    })
+
+            return _json.dumps({
+                "status": "ok",
+                "data": {
+                    "table_name": table_name,
+                    "schema": schema or records[0].get("schema") or "",
+                    "fields": list(field_map.values())
+                }
+            }, ensure_ascii=False)
+    finally:
+        driver.close()
+
+
+@mcp.tool()
 def get_graph_overview() -> str:
     """获取元数据知识图谱的整体结构统计（节点类型、关系类型、数量）。"""
     check_neo4j_connection()
