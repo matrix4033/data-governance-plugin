@@ -11,6 +11,7 @@ import sys
 import traceback
 from datetime import date, datetime, time
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable, AuthError
 from neo4j.time import DateTime, Date, Time
 
 
@@ -24,6 +25,38 @@ class Neo4jEncoder(json.JSONEncoder):
         if isinstance(obj, (Time, time)):
             return str(obj)
         return super().default(obj)
+
+
+# 检查 Neo4j 是否可达的装饰器
+NEO4J_CHECKED = False
+NEO4J_OK = False
+
+
+def require_neo4j(func):
+    """工具装饰器：自动检测 Neo4j 连通性，失败时返回友好提示。"""
+    from functools import wraps
+    @wraps(func)
+    def wrapper(params):
+        try:
+            driver = get_driver()
+            driver.verify_connectivity()
+            driver.close()
+        except (ServiceUnavailable, AuthError, Exception) as e:
+            return {
+                "status": "error",
+                "message": (
+                    f"Neo4j 无法连接。请先配置 Neo4j 连接：\n"
+                    f"  主机: {NEO4J_HOST}:{NEO4J_PORT}\n"
+                    f"  用户: {NEO4J_USER}\n"
+                    f"  密码: (已设置)\n\n"
+                    f"可通过以下方式设置：\n"
+                    f"  1. 环境变量: export NEO4J_HOST=... NEO4J_PASSWORD=...\n"
+                    f"  2. Claude Code settings.json env 字段\n\n"
+                    f"错误详情: {e}"
+                ),
+            }
+        return func(params)
+    return wrapper
 
 
 NEO4J_HOST = os.environ.get("NEO4J_HOST", "127.0.0.1")
@@ -43,6 +76,7 @@ def get_driver():
 # 工具处理函数
 # ============================================================
 
+@require_neo4j
 def handle_overview(params: dict) -> dict:
     """图谱概览：节点/关系统计。"""
     driver = get_driver()
@@ -70,6 +104,7 @@ def handle_overview(params: dict) -> dict:
     return {"status": "ok", "data": data}
 
 
+@require_neo4j
 def handle_search(params: dict) -> dict:
     """元数据搜索：keyword / attribute / exact 三种模式。"""
     mode = params.get("mode", "keyword")
@@ -124,6 +159,7 @@ def handle_search(params: dict) -> dict:
     return {"status": "ok", "data": results, "count": len(results)}
 
 
+@require_neo4j
 def handle_details(params: dict) -> dict:
     """节点详情（含邻居节点）。"""
     node_id = params.get("node_id")
@@ -187,6 +223,7 @@ def handle_details(params: dict) -> dict:
     return {"status": "ok", "data": data}
 
 
+@require_neo4j
 def handle_lineage(params: dict) -> dict:
     """血缘追溯：business / technical / both。"""
     entity_name = params.get("entity_name", "")
@@ -296,7 +333,35 @@ def _get_technical_lineage(session, entity_name, entity_type):
 # 工具注册
 # ============================================================
 
+def handle_check_connection(params: dict) -> dict:
+    """测试 Neo4j 连通性。"""
+    try:
+        driver = get_driver()
+        driver.verify_connectivity()
+        driver.close()
+        return {
+            "status": "ok",
+            "data": {
+                "connected": True,
+                "host": NEO4J_HOST,
+                "port": NEO4J_PORT,
+                "user": NEO4J_USER,
+                "database": NEO4J_DATABASE,
+            },
+        }
+    except ServiceUnavailable:
+        return {"status": "error", "message": f"无法连接 Neo4j: {NEO4J_HOST}:{NEO4J_PORT}，请确认服务是否启动"}
+    except AuthError:
+        return {"status": "error", "message": f"Neo4j 认证失败，请检查用户名或密码"}
+    except Exception as e:
+        return {"status": "error", "message": f"连接失败: {e}"}
+
 TOOLS = {
+    "check_connection": {
+        "description": "测试 Neo4j 数据库连通性，返回连接状态和配置信息",
+        "params": {},
+        "handler": handle_check_connection,
+    },
     "get_graph_overview": {
         "description": "获取元数据知识图谱的整体结构统计（节点类型、关系类型、数量）",
         "params": {},
