@@ -6,3 +6,6 @@ __pycache__/
 # Claude Code 项目级本地设置
 .claude/settings.local.json
 .claude/*.local.md
+
+# 由 setup_mcp.sh 生成（含机器级绝对路径）
+.mcp.json
