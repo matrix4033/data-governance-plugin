@@ -2,38 +2,15 @@
 
 ## 概述
 
-优化 dg-rules-agent 的架构一致性和规则生成质量。
+优化 dg-rules-agent 的规则生成质量。
 
-- **优化类型**: 架构对齐 + Prompt 增强
-- **当前状态**: 纯 LLM 流程，Prompt 输出不含 business_justification
-- **目标状态**: LLM 直接生成带 business_justification 的规则
-
----
-
-## 一、架构对齐
-
-### 问题
-
-`SKILL.md` 声明引用 `references/rules-reference.md`，但该文件已被删除。
-
-### 修改文件
-
-**`plugin/skills/dg-rules/SKILL.md`**
-
-删除对 `rules-reference.md` 的引用，保留现有的 knowledge 文件引用：
-
-```markdown
-## 知识库
-
-- `references/enums.md` — 标准枚举值（GB/T 2261.1、GB/T 3304 等）
-- `references/formats.md` — 格式规范（身份证、日期、手机号等）
-- `references/templates.md` — 规则模板（一致性校验等）
-- `references/prompt.md` — LLM 生成规则 prompt
-```
+- **优化类型**: Prompt 增强 + 工作流简化
+- **当前状态**: 纯 LLM 流程，Prompt 输出不含 business_justification，Agent 工作流有多余步骤
+- **目标状态**: LLM 直接生成带 business_justification 的规则，Agent 工作流精简
 
 ---
 
-## 二、Prompt 优化
+## 一、Prompt 优化
 
 ### 问题
 
@@ -43,9 +20,9 @@
 
 **`plugin/skills/dg-rules/references/prompt.md`**
 
-#### 2.1 输入部分增强
+#### 1.1 输入部分增强
 
-输入增加知识图谱字段的 `business_term` 和 `data_standard`：
+在 prompt 模板中增加字段的业务语义信息：
 
 ```markdown
 ## 输入信息
@@ -57,7 +34,9 @@
   - 每个字段包含: name, type, business_term, data_standard, is_core_field
 ```
 
-#### 2.2 输出部分增强
+Agent 组装 prompt 时，将 `get_table_metadata` 返回的业务语义信息注入到 `{fields}` 占位符中。
+
+#### 1.2 输出部分增强
 
 输出的 JSON 增加 `business_justification` 字段：
 
@@ -95,9 +74,9 @@
 ]
 ```
 
-#### 2.3 规则生成指南增强
+#### 1.3 规则生成指南增强
 
-在"规则生成指南"部分，为每类规则补充 business_justification 生成规则：
+在"规则生成指南"末尾新增 business_justification 生成规则 section：
 
 ```markdown
 ### 规则 business_justification 生成规则
@@ -121,36 +100,47 @@
 
 ---
 
-## 三、Agent 工作流简化
+## 二、Agent 工作流简化
 
-由于 Prompt 直接生成 `business_justification`，Agent 工作流简化为：
+### 问题
+
+当前 Agent 有 9 个 Step，其中：
+- **Step 4（context7 标准查阅）**: 纯 LLM 流程中标准知识已包含在 knowledge 文件中，LLM 自行推断，不需要单独调用 context7
+- **Step 6（后处理注解 business_justification）**: Prompt 优化后 LLM 直接生成，后处理不再需要
+
+### 修改文件
+
+**`plugin/agents/dg-rules-agent.md`**
+
+从 9 步简化为 7 步：
 
 ```
 Step 1: 接收表名 + dialect
-Step 2: 调用 dg-neo4j.get_table_metadata 获取字段元数据
-Step 3: 读取 knowledge 文件（enums/formats/templates/prompt）
-Step 4: 组装 Prompt（注入 business_term/data_standard）
+Step 2: 调用 dg-neo4j.get_table_metadata 获取字段元数据（含 business_term/data_standard）
+Step 3: 读取 knowledge 文件（enums.md / formats.md / templates.md / prompt.md）
+Step 4: 组装 Prompt — 将 get_table_metadata 返回的业务语义注入 prompt 模板
 Step 5: 调用 LLM 生成规则（直接带 business_justification）
-Step 6: 保存 CSV（无需后处理）
+Step 6: 保存 CSV 到 output/rules/<table>/all_rules.csv
 Step 7: 调用 rules-reviewer 审查
 Step 8: 返回结果
 ```
 
 ---
 
-## 四、文件变更清单
+## 三、文件变更清单
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `plugin/skills/dg-rules/SKILL.md` | 修改 | 删除 rules-reference.md 引用 |
-| `plugin/skills/dg-rules/references/prompt.md` | 修改 | 增强输入/输出，支持 business_justification |
-| `plugin/agents/dg-rules-agent.md` | 修改 | 简化工作流 Step 6（移除后处理） |
+| `plugin/skills/dg-rules/references/prompt.md` | 修改 | 增强输入/输出，新增 business_justification 生成规则 |
+| `plugin/agents/dg-rules-agent.md` | 修改 | 移除 Step 4（context7）和 Step 6（后处理），简化至 7 步 |
+
+注：SKILL.md 已正确引用知识库文件，无需修改。
 
 ---
 
-## 五、验收标准
+## 四、验收标准
 
-1. SKILL.md 不引用不存在的文件
-2. Prompt 输出的 JSON 包含 `business_justification` 字段
-3. Agent 工作流不再需要对 CSV 进行后处理以添加 business_justification
-4. 生成的规则可读性：业务人员能理解每条规则的生成原因
+1. Prompt 输出的 JSON 包含 `business_justification` 字段
+2. Agent 工作流精简为 7 个 Step（移除 context7 和后处理）
+3. 业务人员能直接理解每条规则的生成原因
+4. 输出路径与 SKILL.md 声明一致：`output/rules/<table>/all_rules.csv`
