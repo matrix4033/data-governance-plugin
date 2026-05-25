@@ -2,9 +2,14 @@ __pycache__/
 *.pyc
 .DS_Store
 .omc/
+.remember/
 
 # Claude Code 项目级本地设置
 .claude/settings.local.json
 .claude/*.local.md
+
+# 数据文件与文档不纳入版本控制
+data/
+docs/
 
 # .mcp.json 由 git 跟踪（使用相对路径，支持跨机器）
