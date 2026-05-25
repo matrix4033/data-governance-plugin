@@ -65,7 +65,7 @@ pip install pymysql
 
 ## 安装方式
 
-### 方式一：Claude Code 插件市场安装（推荐）
+### 方式一：Claude Code 市场安装（推荐）
 
 在 Claude Code 中执行：
 
@@ -73,17 +73,16 @@ pip install pymysql
 /plugin install data-governance
 ```
 
-### 方式二：本地开发模式（贡献者）
+安装完成后按提示重启 Claude Code 即可使用。
+
+### 方式二：本地开发模式
 
 如果需要修改或调试插件代码：
 
 ```bash
-# 1. 克隆项目到本地
 git clone https://github.com/matrix4033/data-governance-plugin.git
 cd data-governance-plugin
-
-# 2. 在 Claude Code 中加载本地插件
-#    从项目根目录启动即可自动发现插件
+# 从项目根目录启动即可自动发现本地插件
 claude
 ```
 
