@@ -24,19 +24,20 @@ if BUILDER_DIR:
     sys.path.insert(0, os.path.dirname(BUILDER_DIR))
 
 from builder.base import BaseBuilder, Rule
-from builder.validity import ValidityBuilder
+from builder.validity_enhanced import ValidityBuilderEnhanced
 from builder.uniqueness import UniquenessBuilder
-from builder.completeness import CompletenessBuilder
-from builder.consistency import ConsistencyBuilder
+from builder.completeness_enhanced import CompletenessBuilderEnhanced
+from builder.consistency_enhanced import ConsistencyBuilderEnhanced
 from builder.accuracy import AccuracyBuilder
 from builder.report import build_report, format_text_report, save_report_csv, save_score_csv
 from builder.runner import Runner, load_db_config, format_plan, format_results
 
+# 增强版 Builder：基于业务语义推断规则类型
 BUILDERS = {
-    "validity": ValidityBuilder,
+    "validity": ValidityBuilderEnhanced,
     "uniqueness": UniquenessBuilder,
-    "completeness": CompletenessBuilder,
-    "consistency": ConsistencyBuilder,
+    "completeness": CompletenessBuilderEnhanced,
+    "consistency": ConsistencyBuilderEnhanced,
     "accuracy": AccuracyBuilder,
 }
 

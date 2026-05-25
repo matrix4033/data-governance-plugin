@@ -46,8 +46,13 @@ export NEO4J_USER="${NEO4J_USER:-neo4j}"
 export NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
 export NEO4J_DATABASE="${NEO4J_DATABASE:-neo4j}"
 
-# Builder 路径配置（转为绝对路径）
-export BUILDER_CONFIG="${BUILDER_CONFIG:-$PLUGIN_ROOT/scripts/config.json}"
-export BUILDER_DIR="${BUILDER_DIR:-$PLUGIN_ROOT/scripts/builder}"
+# Builder 路径配置（转为绝对路径，需在 cd 之前解析）
+_REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"  # repo root, two levels up from scripts/
+if [[ "$BUILDER_CONFIG" != /* ]]; then
+    export BUILDER_CONFIG="$_REPO_ROOT/$BUILDER_CONFIG"
+fi
+if [[ "$BUILDER_DIR" != /* ]]; then
+    export BUILDER_DIR="$_REPO_ROOT/$BUILDER_DIR"
+fi
 
 exec "$PYTHON" "$SCRIPT_DIR/$SCRIPT_NAME" "$@"
