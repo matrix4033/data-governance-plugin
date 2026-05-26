@@ -427,5 +427,85 @@ def _get_technical_lineage(session, entity_name, entity_type):
     return [dict(r) for r in session.run(cypher, name=entity_name)]
 
 
+@mcp.tool()
+def get_enum_values(code: str) -> str:
+    """获取指定枚举的所有值。
+
+    Args:
+        code: 枚举代码，如 "FL_XB"
+
+    Returns:
+        JSON: {"status": "ok", "data": {"code": "FL_XB", "name": "性别", "values": [...]}}
+    """
+    import json as _json
+
+    check_neo4j_connection()
+    driver = get_driver()
+    try:
+        with driver.session(database=NEO4J_DATABASE) as session:
+            cypher = """
+            MATCH (ec:EnumCategory {code: $code})
+            OPTIONAL MATCH (ec)-[:HAS_ENUM_VALUE]->(ev:EnumValue)
+            RETURN ec.name AS name, ec.code AS code,
+                   collect({code: ev.code, name: ev.name, value: ev.value}) AS values
+            """
+            result = session.run(cypher, code=code)
+            record = result.single()
+            if not record:
+                return _json.dumps({
+                    "status": "error",
+                    "message": f"枚举 {code} 不存在"
+                }, ensure_ascii=False)
+
+            # 过滤掉空值（OPTIONAL MATCH 可能产生全 null 行）
+            values = [v for v in record["values"] if v.get("code") is not None]
+            return _json.dumps({
+                "status": "ok",
+                "data": {
+                    "code": record["code"],
+                    "name": record["name"],
+                    "values": values
+                }
+            }, ensure_ascii=False)
+    finally:
+        driver.close()
+
+
+@mcp.tool()
+def search_enums(keyword: str) -> str:
+    """搜索枚举类别。
+
+    Args:
+        keyword: 搜索关键词（匹配 name 或 code）
+
+    Returns:
+        JSON: {"status": "ok", "data": [{"code": "...", "name": "...", "value_count": N}, ...]}
+    """
+    import json as _json
+
+    check_neo4j_connection()
+    driver = get_driver()
+    try:
+        with driver.session(database=NEO4J_DATABASE) as session:
+            cypher = """
+            MATCH (ec:EnumCategory)
+            WHERE ec.name CONTAINS $keyword OR ec.code CONTAINS $keyword
+            OPTIONAL MATCH (ec)-[:HAS_ENUM_VALUE]->(ev:EnumValue)
+            RETURN ec.code AS code, ec.name AS name, count(ev) AS value_count
+            ORDER BY ec.name
+            """
+            result = session.run(cypher, keyword=keyword)
+            records = list(result)
+            return _json.dumps({
+                "status": "ok",
+                "data": [
+                    {"code": r["code"], "name": r["name"], "value_count": r["value_count"]}
+                    for r in records
+                ]
+            }, ensure_ascii=False)
+    finally:
+        driver.close()
+
+
 if __name__ == "__main__":
     mcp.run(transport="stdio")
