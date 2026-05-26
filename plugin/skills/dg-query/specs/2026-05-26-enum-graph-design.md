@@ -51,6 +51,11 @@
 
 ## 导入流程
 
+### Phase 0：备份
+1. **实施前备份**：使用 `neo4j-admin dump` 或 `apoc.export.cypher` 导出当前图谱为 `.dump` 文件
+2. **实施后验证**：检查 EnumCategory 节点数量、关系数量是否符合预期
+3. **实施后备份**：再次导出图谱，命名加日期后缀（如 `graph_20260526_after.dump`）
+
 ### Phase 1：试点验证
 1. 导入 2 个 EnumCategory 节点（性别、民族）
 2. 批量匹配 Field → 建立关系
@@ -68,6 +73,16 @@
 3. 生成 Cypher 语句创建 ENUM_TYPE_OF 关系
 4. 在 dg-query skill 增加查询枚举值的工具
 5. 试点验证
+
+## 备份命令
+
+```bash
+# Neo4j Docker 环境备份
+docker exec neo4j neo4j-admin dump --database=neo4j --to=/backups/graph_before.dump
+
+# 或使用 apoc
+CALL apoc.export.cypher.all("graph_backup.cypher", {})
+```
 
 ## 数据来源
 
