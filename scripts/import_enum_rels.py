@@ -55,10 +55,10 @@ def get_password():
 
 
 def create_relationships(tx, code: str, name: str) -> int:
-    """为指定枚举代码建立所有匹配的 Field → EnumCategory 关系"""
+    """为指定枚举代码建立所有匹配的 Field → EnumCategory 关系（幂等）"""
     query = """
     MATCH (f:Field), (e:EnumCategory {code: $code})
-    WHERE f.business_term CONTAINS $name
+    WHERE f.business_term CONTAINS $name AND NOT (f)-[:ENUM_TYPE_OF]->(e)
     CREATE (f)-[:ENUM_TYPE_OF]->(e)
     RETURN count(*) AS created
     """
