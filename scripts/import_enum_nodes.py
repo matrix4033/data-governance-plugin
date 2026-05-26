@@ -138,7 +138,8 @@ def import_enums(codes: list[str] | None = None, dry_run: bool = False) -> int:
             MERGE (e:EnumCategory {code: $code})
             SET e.name = $name,
                 e.standard = $standard,
-                e.value_count = $value_count
+                e.value_count = $value_count,
+                e.values = $values
             RETURN e.code AS code
             """
             result = session.run(
@@ -147,6 +148,7 @@ def import_enums(codes: list[str] | None = None, dry_run: bool = False) -> int:
                 name=name,
                 standard=standard,
                 value_count=value_count,
+                values=values,
             )
             record = result.single()
             if record:

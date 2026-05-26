@@ -444,10 +444,8 @@ def get_enum_values(code: str) -> str:
     try:
         with driver.session(database=NEO4J_DATABASE) as session:
             cypher = """
-            MATCH (ec:EnumCategory {code: $code})
-            OPTIONAL MATCH (ec)-[:HAS_ENUM_VALUE]->(ev:EnumValue)
-            RETURN ec.name AS name, ec.code AS code,
-                   collect({code: ev.code, name: ev.name, value: ev.value}) AS values
+            MATCH (e:EnumCategory {code: $code})
+            RETURN e.name AS name, e.code AS code, e.values AS values
             """
             result = session.run(cypher, code=code)
             record = result.single()
@@ -457,14 +455,12 @@ def get_enum_values(code: str) -> str:
                     "message": f"枚举 {code} 不存在"
                 }, ensure_ascii=False)
 
-            # 过滤掉空值（OPTIONAL MATCH 可能产生全 null 行）
-            values = [v for v in record["values"] if v.get("code") is not None]
             return _json.dumps({
                 "status": "ok",
                 "data": {
                     "code": record["code"],
                     "name": record["name"],
-                    "values": values
+                    "values": record["values"] or []
                 }
             }, ensure_ascii=False)
     finally:
@@ -488,11 +484,10 @@ def search_enums(keyword: str) -> str:
     try:
         with driver.session(database=NEO4J_DATABASE) as session:
             cypher = """
-            MATCH (ec:EnumCategory)
-            WHERE ec.name CONTAINS $keyword OR ec.code CONTAINS $keyword
-            OPTIONAL MATCH (ec)-[:HAS_ENUM_VALUE]->(ev:EnumValue)
-            RETURN ec.code AS code, ec.name AS name, count(ev) AS value_count
-            ORDER BY ec.name
+            MATCH (e:EnumCategory)
+            WHERE e.name CONTAINS $keyword OR e.code CONTAINS $keyword
+            RETURN e.code AS code, e.name AS name, e.value_count AS value_count
+            ORDER BY e.name
             """
             result = session.run(cypher, keyword=keyword)
             records = list(result)
