@@ -59,6 +59,13 @@ description: 当用户要求查表结构、搜索字段、检索字段、查看�
 - `lineage_type: "technical"` — 数据库 → 物理表 → 字段
 - `lineage_type: "both"` — 同时返回两种血缘
 
+### 5. 查询枚举值
+
+**工具：** `dg-neo4j` → `get_enum_values` / `search_enums`
+
+- `get_enum_values(code: "FL_XB")` — 获取性别枚举的所有值
+- `search_enums(keyword: "性别")` — 搜索包含"性别"的枚举
+
 ## 输出格式
 
 按类型分组展示结果，附带数量统计。
